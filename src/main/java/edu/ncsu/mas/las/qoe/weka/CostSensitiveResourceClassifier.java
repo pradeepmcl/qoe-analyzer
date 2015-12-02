@@ -7,6 +7,7 @@ import java.util.Random;
 import edu.ncsu.mas.las.qoe.weka.DatasetBuilder.Feature;
 import weka.classifiers.CostMatrix;
 import weka.classifiers.Evaluation;
+import weka.classifiers.functions.LibSVM;
 import weka.classifiers.functions.SMO;
 import weka.classifiers.meta.Bagging;
 import weka.classifiers.meta.CostSensitiveClassifier;
@@ -52,15 +53,21 @@ public class CostSensitiveResourceClassifier {
     }
   }
   
-  public void classify(String costString) throws Exception {    
-    CostSensitiveClassifier cls = new CostSensitiveClassifier();
-    Bagging nestedCls = new Bagging();
-    nestedCls.setClassifier(new SMO());
-    cls.setClassifier(nestedCls);
-    cls.setCostMatrix(CostMatrix.parseMatlab(costString));
+  public void classifyWithBagging(String costString) throws Exception {
+    SMO baseCls = new SMO();
+    // baseCls.setOptions(new String[] { "-C", "1.0", "-L", "0.001", "-P", "1.0E-12", "-N", "0", 
+    //    "-V", "-1", "-W", "1", "-K", "weka.classifiers.functions.supportVector.PolyKernel" });
+    
+    Bagging baggingCls = new Bagging();
+    baggingCls.setClassifier(baseCls);
+    // baggingCls.setOptions(new String[] { "P", "100", "-S", "1", "-num-slots", "1", "-I", "10" });
+    
+    CostSensitiveClassifier constSensCls = new CostSensitiveClassifier();
+    constSensCls.setClassifier(baggingCls);
+    constSensCls.setCostMatrix(CostMatrix.parseMatlab(costString));
 
     Evaluation eval = new Evaluation(data);
-    eval.crossValidateModel(cls, data, 10, new Random(1));
+    eval.crossValidateModel(constSensCls, data, 10, new Random(1));
     // System.out.println(eval.toSummaryString("\nResults\n======\n", false));
 
     for (int i = 0; i < 2; i++) {
@@ -71,6 +78,25 @@ public class CostSensitiveResourceClassifier {
     printConfusionMatrix(eval.confusionMatrix());
   }
 
+  public void classify(String costString) throws Exception {
+    LibSVM baseCls = new LibSVM();
+    
+    CostSensitiveClassifier constSensCls = new CostSensitiveClassifier();
+    constSensCls.setClassifier(baseCls);
+    constSensCls.setCostMatrix(CostMatrix.parseMatlab(costString));
+
+    Evaluation eval = new Evaluation(data);
+    eval.crossValidateModel(constSensCls, data, 10, new Random(1));
+    // System.out.println(eval.toSummaryString("\nResults\n======\n", false));
+
+    for (int i = 0; i < 2; i++) {
+      System.out.println("Class: " + i + "; Precision: " + eval.precision(i) + "; Recall: "
+          + eval.recall(i) + "; F-measure: " + eval.fMeasure(i));
+    }
+    
+    printConfusionMatrix(eval.confusionMatrix());
+  }
+  
   public void printConfusionMatrix(double[][] confusionMatrix) {
     for (int i = 0; i < confusionMatrix.length; i++) {
       for (int j = 0; j < confusionMatrix[i].length; j++) {
