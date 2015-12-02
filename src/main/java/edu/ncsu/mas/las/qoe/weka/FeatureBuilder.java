@@ -27,6 +27,10 @@ public class FeatureBuilder {
     QUEUED, // Redundant
     QUEUE_TIME,
     SYMPTOMS,
+    DISPATCHER_PRIORITY,
+    TRUE_PRIORITY,    
+    DISPATCHER_SURVIVAL_PROBABILITY,
+    TRUE_SURVIVAL_PROBABILITY,
     CLASS
   }
 
@@ -105,6 +109,23 @@ public class FeatureBuilder {
     atts.addElement(new Attribute(Feature.SYMPTOMS.name(), symptomsVals));
     valTypes.put(Feature.SYMPTOMS, symptomsVals);
 
+    FastVector priorityVals = new FastVector();
+    priorityVals.addElement("1");
+    priorityVals.addElement("2");
+    priorityVals.addElement("3");
+    
+    atts.addElement(new Attribute(Feature.DISPATCHER_PRIORITY.name(), priorityVals));
+    valTypes.put(Feature.DISPATCHER_PRIORITY, priorityVals);
+
+    atts.addElement(new Attribute(Feature.TRUE_PRIORITY.name(), priorityVals));
+    valTypes.put(Feature.TRUE_PRIORITY, priorityVals);
+
+    atts.addElement(new Attribute(Feature.DISPATCHER_SURVIVAL_PROBABILITY.name())); // Numeric
+    valTypes.put(Feature.DISPATCHER_SURVIVAL_PROBABILITY, null);
+
+    atts.addElement(new Attribute(Feature.TRUE_SURVIVAL_PROBABILITY.name())); // Numeric
+    valTypes.put(Feature.TRUE_SURVIVAL_PROBABILITY, null);
+
     FastVector classVals = new FastVector();
     classVals.addElement("Correct"); // Correctly classified
     classVals.addElement("Incorrect"); // Misclassified
@@ -164,6 +185,21 @@ public class FeatureBuilder {
             
           case SYMPTOMS:
             vals[i++] = valTypes.get(feature).indexOf(record.get("Call \"symptoms\""));
+            break;
+          case DISPATCHER_PRIORITY:
+            vals[i++] = valTypes.get(feature).indexOf(record.get("Dispatched Priority"));
+            break;
+            
+          case DISPATCHER_SURVIVAL_PROBABILITY:
+            vals[i++] = Double.parseDouble(record.get("Dispatched-Based Survival Probability"));
+            break;
+            
+          case TRUE_PRIORITY:
+            vals[i++] = valTypes.get(feature).indexOf(record.get("True Priority"));
+            break;
+            
+          case TRUE_SURVIVAL_PROBABILITY:
+            vals[i++] = Double.parseDouble(record.get("True-Based Survival Probability"));
             break;
           }
         }
